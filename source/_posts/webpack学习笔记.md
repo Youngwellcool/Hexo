@@ -1,0 +1,55 @@
+---
+title: webpack学习笔记
+date: 2018-04-24 20:44:08
+tags:
+    - 笔记
+    - 心得
+---
+## 1、什么是webpack
+WebPack可以看做是模块打包机：它做的事情是，分析你的项目结构，找到JavaScript模块以及其它的一些浏览器不能直接运行的拓展语言（Sass，TypeScript等），并将其转换和打包为合适的格式供浏览器使用。在3.0出现后，Webpack还肩负起了优化项目的责任。
+
+这段话有三个重点：
+1.打包：可以把多个Javascript文件打包成一个文件，减少服务器压力和下载带宽。
+2.转换：把拓展语言转换成为普通的JavaScript，让浏览器顺利运行。
+3.优化：前端变的越来越复杂后，性能也会遇到问题，而WebPack也开始肩负起了优化和提升性能的责任
+
+## 2、安装
+使用cnpm i webpack --save-dev来局部安装webpack，官方不建议全局安装webpack，“这会将您项目中，webpack 锁定到指定版本，并且在使用不同的 webpack 版本的项目中，可能会导致构建失败。”
+安装完成后，可以使用 webpack -v 命令，来检测是否安装成功了。
+<!--more-->
+    **--save-dev 这里的参数--save是要保存到package.json中，-dev是在开发时使用这个包(将这个包放在devdependencies中)，而生产环境中不使用**
+
+## 3、开启服务和热更新
+使用 cnpm i webpack-dev-server --save-dev 来局部安装webpack-dev-server，安装完成后，需要在webpack.config.js中配置devServer参数(这是关键，不然没有热更新)
+webpack.config.js文件中：
+```bash
+devServer:{
+        //设置基本目录结构
+        contentBase:path.resolve(__dirname,'dist'),
+        //服务器的IP地址，可以使用IP也可以使用localhost
+        host:'localhost',
+        //服务端gzip压缩是否开启
+        compress:true,
+        //配置服务端口号
+        port:1717,
+        //自动打开浏览器
+        open:true
+    }
+```
+配置好了之后，命令行中输入webpack-dev-server,回车，就会按照webpack.config.js中的配置预打包，预打包输出的bundle.js会存在电脑内存中，设置open:true，会自动打开默认浏览器，到此，webpack服务就开启了。
+命令行中输入 webpack,回车,就是执行正式打包了，会在dist目录中生成bundle.js文件。
+(tips：如果嫌每次开启服务都输入webpack-dev-server太麻烦了，可以在package.json文件中配置“scripts”参数，具体设置如下)
+package.json文件中：
+```bash
+"scripts": {
+    "dev": "webpack-dev-server",
+    "build": "webpack"
+  },
+```
+## 4、生产环境和开发环境
+* 开发环境：在开发时需要的环境，package.json中的devdependencies指在开发时需要依赖的包。
+* 生产环境：程序开发完成，开始运行后的环境，package.json中的dependencies这里指要使项目运行，所需要的依赖包。
+
+我们新建的src文件，用来存放我们开发时的JavaScript文件、css文件和html文件，这个就是我们的开发目录！
+我们执行webpack命令，打包后生成的dist目录，存放的是打包后生成的JavaScript文件和html文件，这个就是我们正式的生产目录了
+
