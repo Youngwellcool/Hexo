@@ -52,4 +52,21 @@ package.json文件中：
 
 我们新建的src文件，用来存放我们开发时的JavaScript文件、css文件和html文件，这个就是我们的开发目录！
 我们执行webpack命令，打包后生成的dist目录，存放的是打包后生成的JavaScript文件和html文件，这个就是我们正式的生产目录了
+## 5、html自动生成插件
+html-webpack-plugin插件
+### 安装
+使用命令cnpm i html-webpack-plugin --save-dev安装该插件，然后在webpack.config.js配置文件中先const htmlPlugin = require('html-webpack-plugin')引入该插件(注意：写在配置文件中plugins参数中的都需要先引入，而loader都不需要引入直接使用)，然后在plugins中配置该插件如下：
+```bash
+new htmlPlugin({  // 打包自动生成html插件
+                minify:{  // 是对html文件进行压缩，removeAttrubuteQuotes是去掉属性的双引号。
+                    removeAttributeQuotes:true
+                },
+                hash:true, // 为了开发中js有缓存效果，所以加入hash，这样可以有效避免缓存JS。
+                template:'./src/index.html' //是要打包的html模版路径和文件名称。
+            }),
+```
+配置好后，命令行中执行webpack命令就会将src目录下的index.html文件打包到dist目录下，文件名为index.html
+(tips：src目录下的index.html文件中不需要引入css和js，打包时，会根据webpack配置文件中的entry入口文件里所依赖的css和js，自动将依赖的js和css打包到dist中的index.html，会按照打包后正确的路径引入index.html中)
+总结：
+html文件的打包可以有效的区分开发目录和生产目录，在webpack的配置中也要搞清楚哪些配置用于生产环境，哪些配置用于开发环境，避免两种环境的配置冲突。
 
