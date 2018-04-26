@@ -91,7 +91,7 @@ extract-text-webpack-plugin插件
 然后执行webpack打包命令，在dist目录会自动生成css文件夹，index.css是分离后的css文件，因为配置了publicPath:'../'，css中引入的图片路径就正确了
 ### 总结
 因为webpack4不支持extract-text-webpack-plugin最新版正式插件，导致引入该插件一直报错，上网找了很久的资料才找到解决办法，入了很多坑，还有该插件的publicPath配置参数对css中引入图片非常关键，不然打包后图片路径就不对了。
-## 处理HTML中的图片
+## 7、处理HTML中的图片
 问题：我们直接在src中的index.html中用img标签引入图片，打包后，是不会把该引入的图片打包到dist目录中的，因此，浏览器中运行时就找不到该图片了。
 在webpack中是不喜欢你使用标签<img>来引入图片的，但是我们作前端的人特别热衷于这种写法，国人也为此开发了一个：html-withimg-loader。这个小loader。解决的问题就是在hmtl文件中引入<img>标签的问题。
 ### 安装
@@ -104,4 +104,4 @@ cnpm install html-withimg-loader --save
      use:[ 'html-withimg-loader'] 
 }
 ```
-然后在终端中可以进行打包了。你会发现图片被很好的打包了。并且路径也完全正确。
+然后在终端中可以进行打包了。你会发现图片被很好的打包了。并且路径也完全正确。范德萨发
