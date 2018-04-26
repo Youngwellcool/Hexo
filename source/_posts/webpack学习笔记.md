@@ -104,4 +104,155 @@ cnpm install html-withimg-loader --save
      use:[ 'html-withimg-loader'] 
 }
 ```
-然后在终端中可以进行打包了。你会发现图片被很好的打包了。并且路径也完全正确。范德萨发
+然后在终端中可以进行打包了。你会发现图片被很好的打包了。并且路径也完全正确。
+## 8、自动处理CSS3属性前缀
+### 介绍
+PostCSS是一个CSS的处理平台，它可以帮助你的CSS实现更多的功能，但是今天我们就通过其中的一个加前缀的功能，初步了解一下PostCSS。postcss-loader需要和autoprefixer（自动添加前缀的插件）一起使用。
+### 安装
+npm install  postcss-loader autoprefixer -D  (-D 是--save-dev的简写)
+### 配置
+postCSS推荐在项目根目录（和webpack.config.js同级），建立一个postcss.config.js文件。
+postcss.config.js
+```bash
+module.exports = {
+    plugins: [
+        require('autoprefixer')
+    ]
+}
+```
+这就是对postCSS一个简单的配置，引入了autoprefixer插件。让postCSS拥有添加前缀的能力，它会根据 can i use 来增加相应的css3属性前缀。
+对postcss.config.js配置完后，还需要在rules的配置postcss-loader
+```bash
+{
+                test: /\.(css|less)$/,
+                use: extractPlugin.extract({   // css代码分离插件
+                    fallback: "style-loader",
+                    use:[{
+                        loader: "css-loader"
+                    }, {
+                        loader: "less-loader"
+                    },
+                        'postcss-loader',  // 对css新特性，自动补全前缀，需和插件autoprefixer（自动添加前缀的插件）一起使用，此外还需在该配置文件的同级目录下新建postcss.config.js文件，默认只会补全-webkit-前缀，如需补全其他前缀需在package.json中添加browserslist参数配置
+                ],
+                    publicPath:'../'    // TODO 解决分离后的css的图片url路径问题
+                })
+            },
+```
+全部配置好了后，打包，你会发现打包后的css中就只自动增加了-webkit-前缀，why?，上网查询后，原来还需要在package.json中配置browserslist参数，才会出现-ms-前缀，但是还是没有-moz-、-o-前缀。
+package.json文件中 新增browserslist参数
+```bash
+"browserslist": [
+    "defaults",
+    "last 2 versions",
+    "> 1%",
+    "iOS 7",
+    "last 3 iOS versions"
+  ]
+```
+## 9、消除未使用的CSS
+### 介绍
+像Bootstrap这样的框架往往会带有很多CSS。在项目中通常我们只使用它的一小部分。就算我们自己写CSS，随着项目的进展，CSS也会越来越多，有时候需求更改，带来了DOM结构的更改，这时候我们可能无暇关注CSS样式，造成很多CSS的冗余。这节就学习用webpack消除未使用的CSS----purifycss-webpack插件
+### 安装
+purifycss-webpack插件要依赖于purify-css，所以这两个都需要安装
+cnpm install purifycss-webpack purify-css -D
+### 配置
+#### 引入glob
+因为我们需要同步检查html模板，所以我们需要引入node的glob对象使用。在webpack.config.js文件头部引入glob。
+const glob = require('glob')
+#### 引入purifycss-webpack插件
+const PurifycssPlugin = require('purifycss-webpack');
+#### 配置plugins
+引入完成后我们需要在webpack.config.js里配置plugins。代码如下
+```bash
+new PurifycssPlugin({
+    paths:glob.sync(path.join(__dirname,'src/*.html'))
+})
+```
+这里配置了一个paths，主要是寻找html模板，purifycss根据这个配置会遍历你的文件，查找哪些css被使用了。
+#### 总结
+使用这个插件必须配合extract-text-webpack-plugin这个插件，在工作中记得一定要配置这个plugins，因为这决定你代码的质量，非常有用。
+## 10、打包后的调试
+### 介绍
+那我们使用了webpack后，所以代码都打包到了一起，(如果使用了代码压缩的话，调试更麻烦)给调试带来了麻烦，但是webpack已经为我们充分考虑好了这点，它支持生产Source Maps来方便我们的调试。
+### 配置
+在使用webpack时只要通过简单的devtool配置，webapck就会自动给我们生产source maps 文件，map文件是一种对应编译文件和源文件的方法，让我们调试起来更简单。通常，devtool常用的值：source-map、cheap-module-source-map、 eval-source-map、cheap-module-eval-source-map，这四种打包模式，有左到右打包速度越来越快，不过同时也具有越来越多的负面作用，较快的打包速度的后果就是对执行和调试有一定的影响。
+```bash
+module.exports = {
+    devtool:"#source-map"
+            // "#cheap-module-source-map"
+            // "#eval-source-map"
+            // "#cheap-module-eval-source-map"
+    ....
+    ....
+}
+```
+注意：调试在开发中也是必不可少的，但是一定要记得在打包上线前一定要修改webpack配置，关闭source map。
+## 11、切换开发模式和生产模式
+开发环境和生产环境所依赖的包是不同，有时候，请求的资源也是不同的，比如我们在开发的时候异步请求的是我们自己mock的数据，上线后请求的是正式的数据，这时就要能够灵活的切换开发和生产环境了。
+具体设置如下：
+在package.json中的“scripts”中设置requestUrl的值
+```bash
+"scripts": {
+    "server": "webpack-dev-server",
+    "dev": "set requestUrl=mockUrl&webpack",  // 将mockUrl赋值给requestUrl并执行webpack打包命令
+    "buid": "set requestUrl=trueUrl&webpack"
+  },
+```
+这样当我们在命令行中执行npm run dev我们就知道这个是开发环境的打包，npm run buid就是生产环境的打包
+requestUrl是我们定义的一个node的环境变量，可以通过process.env.requestUrl来读取。
+然后我们在webpack.config.js配置文件中通过if-else来判断
+```bash
+if(process.env.requestUrl == 'mockUrl'){  
+    console.log('开发模式')
+}else{
+    console.log('生产模式')
+}
+console.log(encodeURIComponent(process.env.requestUrl)); // 读取requestUrl环境变量
+```
+## 12、打包第三方库
+### 介绍
+在工作中引用第三方的框架是必不可少的，比如引入JQuery或者Vue，该小节讲两种引入方式import的局部引入方式和webpack配置文件中ProvidePlugin插件的全局引入；以引入vue为例
+### 安装vue
+cnpm install vue --save
+安装时需要注意的时vue最终要在生产环境中使用，所以我们这里要使用--save进行安装。
+### import局部引入
+在需要vue.js的文件中
+import Vue from 'vue'
+这里引入是不需要我们写相对路径的，因为vue的包是在node_modules里的，只要写一个包名vue，系统会自动为我们查找的。
+然后
+```bash
+var vm = new Vue({
+    el:'#app',
+    data:{
+        str:'Hello Vue'
+    }
+})
+```
+打包，运行，报错
+Error：You are using the runtime-only build of Vue where the template compiler is not available. Either pre-compile the templates into render functions, or use the compiler-included build
+上网查询，原来默认npm包导出的是 “运行时” 的vue构建(也就是说vue=vue.runtime.js,而我们需要的是vue=vue.js)，运行时构建不包含模板编译器，因此不支持 template 选项，只能用 render 选项，但即使使用运行时构建，在单文件组件中也依然可以写模板，因为单文件组件的模板会在构建时预编译为 render 函数。
+上面一段是官方api中的解释。就是说，如果我们想使用template，我们不能直接在客户端使用npm install之后的vue。而应自己在webpack配置文件中手动修改vue,使其不指向运行时的构建(vue.runtime.js)，具体配置如下，在webpack配置中新增resolve参数
+```bash
+resolve: {
+    alias: {  // 设置别名 
+        'vue': 'vue/dist/vue.js'   // 设置vue=vue/dist/vue.js
+    }
+}
+```
+设置之后import Vue from 'vue'中的vue就是vue/dist/vue.js而不再是vue/dist/vue.runtime.js
+局部引入就是，如果其他js中也需要vue，需在需要vue的js中import Vue from 'vue'，你还可以在任何你需要的js中引入，webpack并不会重复打包，它只给我们打包一次。
+### ProvidePlugin插件全局引入
+ProvidePlugin是一个webpack自带的插件，Provide的意思就是装备、提供。因为ProvidePlugin是webpack自带的插件，所以要先在webpack.config.js中引入webpack。
+```bash
+const webpack = require('webpack');
+```
+在webpack.config.js里引入必须使用require，否则会报错的，这点一定要注意。
+引入成功后配置plugins模块，代码如下。
+```bash
+plugins:[
+    new webpack.ProvidePlugin({
+        Vue:"vue"  // 当然这里的vue也是需要设置alias，使其指向vue/dist/vue.js
+    })
+],
+```
+配置好后，就可以在你的入口文件中使用了，而不用再次引入了。这是一种全局的引入，在实际工作中也可以很好的规范项目所使用的第三方库。
