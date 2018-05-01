@@ -89,6 +89,37 @@ extract-text-webpack-plugin插件
     }
 ```
 然后执行webpack打包命令，在dist目录会自动生成css文件夹，index.css是分离后的css文件，因为配置了publicPath:'../'，css中引入的图片路径就正确了
+### 新增:分离出多个css文件
+webpack配置文件
+```bash
+var styleCss = new extractPlugin('css/index.css')
+var lessCss = new extractPlugin('css/black.css')
+
+    // rules配置:
+/**
+    * css代码分离到两个文件中
+    * .css文件的分离到styleCss创建的css/index.css中
+    * .less文件的分离到lessCss创建的css/black.css中
+    */
+{
+    test:/\.css$/,
+    use:styleCss.extract({
+        use:'css-loader',
+        publicPath:'../'    // TODO 解决分离后的css的图片url路径问题
+    })
+},
+{
+    test:/\.less$/,
+    use:lessCss.extract({
+        use:[{
+                loader: "css-loader"
+            }, {
+                loader: "less-loader"
+            }],
+        publicPath:'../'    // TODO 解决分离后的css的图片url路径问题
+    })
+},
+```
 ### 总结
 因为webpack4不支持extract-text-webpack-plugin最新版正式插件，导致引入该插件一直报错，上网找了很久的资料才找到解决办法，入了很多坑，还有该插件的publicPath配置参数对css中引入图片非常关键，不然打包后图片路径就不对了。
 ## 7、处理HTML中的图片
@@ -256,3 +287,23 @@ plugins:[
 ],
 ```
 配置好后，就可以在你的入口文件中使用了，而不用再次引入了。这是一种全局的引入，在实际工作中也可以很好的规范项目所使用的第三方库。
+### 两者关于代码的优化
++ import引入方法：引用后不管你在代码中使用不使用该类库，都会把该类库打包起来，这样有时就会让代码产生冗余。
++ ProvidePlugin引入方法：引用后只有在类库使用时，才按需进行打包，所以建议在工作使用插件的方式进行引入。
+
+## 13、watch的使用
+### 介绍
+在初级开发阶段，使用webpack-dev-server就可以充当服务器和完成打包任务，但时随着你项目的进一步完成，可能需要前后台联调或者两个前端合并代码时，就需要一个公共的服务器了。这时候我们每次保存后手动打包显然效率太低，我们希望的场景是代码发生变化后，只要保存，webpack自动为我们进行打包。这个工具就是watch，这节课我们把wacht完全学会，你会发现在开发中更加的得心应手
+### 配置
+webpack.config.js中：
+```bash
+watchOptions:{
+    //检测修改的时间，以毫秒为单位
+    poll:1000, 
+    //防止重复保存而发生重复编译错误。这里设置的500是半秒内重复保存，不进行打包操作
+    aggregateTimeout:500, 
+    //不监听的目录
+    ignored:/node_modules/, 
+}
+```
+这样简单的配置后，命令行执行webpack --watch，就开启了watch，你可以随便改一个非配置文件，ctrl+s保存，观察下命令行中，webpack就会自动打包了，这样就能提高我们协同开发时的效率
